@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description=(
-        "Coversational commerce and end-to-end"
+        "Conversational commerce and end-to-end"
         "sales agent fro Zoey Bambini"
     ),
     version=settings.app_version,
