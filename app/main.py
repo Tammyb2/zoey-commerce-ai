@@ -29,9 +29,15 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+
+app.include_router(health_router)
+app.include_router(webhook_router)
+
+
 @app.get("/")
 async def root():
     return {"service": settings.app_name,
             "status": "running",
             "version": settings.app_version
             }
+
