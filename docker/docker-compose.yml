@@ -1,0 +1,60 @@
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: zoey-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+
+    container_name: zoey-api
+
+    env_file:
+      - ../.env
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - redis
+
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ]
+
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+
+    container_name: zoey-worker
+
+    env_file:
+      - ../.env
+
+    depends_on:
+      - redis
+
+    command:
+      [
+        "celery",
+        "-A",
+        "app.tasks.celery_worker.celery_app",
+        "worker",
+        "--loglevel=info"
+      ]
+
+    restart: unless-stopped

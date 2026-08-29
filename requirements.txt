@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+langgraph
+langchain
+langchain-openai
+langsmith
+redis
+celery
+httpx
+structlog
+tenacity
+python-multipart
+pytest
+pytest-asyncio

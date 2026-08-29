@@ -11,10 +11,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
 
     langsmith_api_key: str = ""
-    langchain_tracing_v2: bool = False
+    langchain_tracing_v2: bool = True
     langchain_project: str = "ZoeyCommerceAI"
 
-    meta_verify_token: str = ""
+    meta_verify_token: str = "ZoeyBambini_Secure_Token_2026_!"
     meta_access_token: str = ""
     meta_phone_number_id: str = ""
 
