@@ -1,32 +1,38 @@
 from langgraph.graph import END, START, StateGraph
 
 from app.agents.state import SalesAgentState
+from app.graph.nodes import (
+    generate_response,
+    understand_message,
+)
 
-
-def foundation_node(
-        state: SalesAgentState,
-) -> SalesAgentState:
-
-    return {
-        **state,
-        "response": "Zoey Commerce AI foundation is working",
-    }
 
 def compile_sales_graph():
+
     graph = StateGraph(SalesAgentState)
 
     graph.add_node(
-        "foundation",
-        foundation_node,
+        "understand_message",
+        understand_message,
+    )
+
+    graph.add_node(
+        "generate_response",
+        generate_response,
     )
 
     graph.add_edge(
         START,
-        "foundation",
+        "understand_message",
     )
 
     graph.add_edge(
-        "foundation",
+        "understand_message",
+        "generate_response",
+    )
+
+    graph.add_edge(
+        "generate_response",
         END,
     )
 

@@ -1,5 +1,5 @@
 from functools import lru_cache
-
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "development"
 
-    openai_api_key: str = ""
+    openai_api_key: SecretStr = SecretStr("")
 
     langsmith_api_key: str = ""
     langchain_tracing_v2: bool = True
