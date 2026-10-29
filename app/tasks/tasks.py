@@ -1,13 +1,15 @@
-from app.agents.sales_agent import run_sales_agent, ConversationMessage
+from app.agents.sales_agent import (run_sales_agent, ConversationMessage)
 from app.memory.redis_memory import get_conversation, save_conversation
 from app.tasks.celery_worker import celery_app
 from app.utils.logger import logger
+
+import asyncio
 
 
 @celery_app.task(
     name="zoey.process_whatsapp_message",
     bind=True,
-    autoretry_for=(Exception,),
+    autoretry_for=(ConnectionError, TimeoutError),
     retry_backoff=True,
     retry_kwargs={"max_retries": 3},
 )
@@ -31,10 +33,6 @@ def process_whatsapp_message(
         task_id=self.request.id,
     )
 
-    logger.info(
-        "whatsapp_payload",
-        payload=payload,
-    )
 
     # --------------------------------------------------
     # 1. Extract customer information
@@ -146,9 +144,6 @@ def run_sales_agent_sync(
     Run the asynchronous Sales Agent from a
     synchronous Celery worker.
     """
-
-    import asyncio
-
     return asyncio.run(
         run_sales_agent(
             customer_phone=customer_phone,
