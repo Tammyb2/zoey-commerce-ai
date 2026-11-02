@@ -15,8 +15,10 @@ class Settings(BaseSettings):
     langchain_project: str = "ZoeyCommerceAI"
 
     meta_verify_token: str = "ZoeyBambini_Secure_Token_2026_!"
-    meta_access_token: str = ""
-    meta_phone_number_id: str = ""
+    meta_access_token: SecretStr = SecretStr("")
+    meta_phone_number_id: str = "1462352696956971"
+    meta_graph_api_version: str = "v26.0"
+    meta_request_timeout: float = 15.0
 
     redis_url: str = "redis://localhost:6379/0"
 

@@ -5,6 +5,8 @@ from app.utils.logger import logger
 
 import asyncio
 
+from app.services.whatsapp import send_whatsapp_text_message
+
 
 @celery_app.task(
     name="zoey.process_whatsapp_message",
@@ -107,7 +109,7 @@ def process_whatsapp_message(
     )
 
     # --------------------------------------------------
-    # 5. Save updated conversation
+    # 5. Save updated conversation before attempting delivery
     # --------------------------------------------------
 
     save_conversation(
@@ -116,11 +118,22 @@ def process_whatsapp_message(
     )
 
     logger.info(
-        "customer_message_processed",
+        "conversation saved",
         task_id=self.request.id,
         customer_phone=customer_phone,
-        intent=result.get("intent"),
     )
+
+    # Meta expects the recipient number with country code without the leading plus sign.
+    recipient_phone = customer_phone.removeprefix("+")
+
+    # Send the Sale's Agent's response to the customer.
+    whatsapp_message_id = send_whatsapp_text_message(recipient_phone=recipient_phone,
+                                                     message=response)
+
+    logger.info("whatsapp_reply_sent",
+                task_id=self.request.id,
+                customer_phone=customer_phone,
+                whatsapp_message_id=whatsapp_message_id)
 
     # --------------------------------------------------
     # 6. Return result
@@ -132,6 +145,7 @@ def process_whatsapp_message(
         "customer_phone": customer_phone,
         "intent": result.get("intent"),
         "response": response,
+        "whatsapp_message_id": whatsapp_message_id,
     }
 
 

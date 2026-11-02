@@ -29,6 +29,12 @@ def test_process_whatsapp_message_success(monkeypatch):
             "intent": "product_inquiry",
         }
 
+    def fake_send_whatsapp_text_message(recipient_phone, message):
+        assert recipient_phone == "2348012345678"
+        assert message == "What type of phone are you looking for?"
+
+        return "wamid.test_message_123"
+
     def fake_save_conversation(customer_phone, conversation):
         saved["customer_phone"] = customer_phone
         saved["conversation"] = conversation.copy()
@@ -44,6 +50,11 @@ def test_process_whatsapp_message_success(monkeypatch):
         tasks_module, "save_conversation",
         fake_save_conversation,
     )
+    monkeypatch.setattr(
+        tasks_module,
+        "send_whatsapp_text_message",
+        fake_send_whatsapp_text_message,
+    )
 
     result = tasks_module.process_whatsapp_message(
         {"customer_phone": "2348012345678",
@@ -55,6 +66,8 @@ def test_process_whatsapp_message_success(monkeypatch):
     assert result["response"] == (
         "What type of phone are you looking for?"
     )
+    
+    assert result["whatsapp_message_id"] == "wamid.test_message_123"
 
     assert saved["customer_phone"] == "2348012345678"
     assert saved["conversation"] == [
@@ -65,7 +78,7 @@ def test_process_whatsapp_message_success(monkeypatch):
             "content": "What type of phone are you looking for?",
         },
     ]
-
+    assert result["whatsapp_message_id"] == "wamid.test_message_123"
 
 @pytest.mark.parametrize(
     ("payload", "expected_message"),
@@ -131,3 +144,58 @@ def test_process_whatsapp_message_agent_failure_does_not_save(
         )
 
     assert save_calls == []
+
+def test_process_whatsapp_message_send_failure_preserves_history(
+    monkeypatch,
+):
+    history = []
+    saved = {}
+
+    monkeypatch.setattr(
+        tasks_module,
+        "get_conversation",
+        lambda customer_phone: history.copy(),
+    )
+
+    monkeypatch.setattr(
+        tasks_module,
+        "run_sales_agent_sync",
+        lambda **kwargs: {
+            "response": "Hello! How can I help you?",
+            "intent": "general_inquiry",
+        },
+    )
+
+    def fake_save_conversation(customer_phone, conversation):
+        saved["conversation"] = conversation.copy()
+
+    def fake_send_whatsapp_text_message(recipient_phone, message):
+        raise RuntimeError("WhatsApp delivery failed")
+
+    monkeypatch.setattr(
+        tasks_module,
+        "save_conversation",
+        fake_save_conversation,
+    )
+
+    monkeypatch.setattr(
+        tasks_module,
+        "send_whatsapp_text_message",
+        fake_send_whatsapp_text_message,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="WhatsApp delivery failed",
+    ):
+        tasks_module.process_whatsapp_message(
+            {
+                "customer_phone": "2348012345678",
+                "message": "Hello",
+            }
+        )
+
+    assert saved["conversation"] == [
+        {"role": "customer", "content": "Hello"},
+        {"role": "assistant", "content": "Hello! How can I help you?"},
+    ]
