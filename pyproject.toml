@@ -24,3 +24,8 @@ dependencies = [
     "tenacity>=9.1.4",
     "uvicorn>=0.51.0",
 ]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
